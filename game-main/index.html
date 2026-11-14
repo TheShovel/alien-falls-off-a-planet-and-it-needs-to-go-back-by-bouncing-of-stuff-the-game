@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<!-- Created with https://studio.penguinmod.com/PenguinMod-Packager/ -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- We only include this to explicitly loosen the CSP of various packager environments. It does not provide any security. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob:">
+  <title>game-main</title>
+  <style>
+    body {
+      color: #ffffff;
+      font-family: sans-serif;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    :root, body.is-fullscreen {
+      background-color: #000000;
+    }
+    [hidden] {
+      display: none !important;
+    }
+    h1 {
+      font-weight: normal;
+    }
+    a {
+      color: inherit;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    #app, #loading, #error, #launch {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: default;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #000000;
+    }
+    #launch {
+      background-color: rgba(0, 0, 0, 0.7);
+      cursor: pointer;
+    }
+    .green-flag {
+      width: 80px;
+      height: 80px;
+      padding: 16px;
+      border-radius: 100%;
+      background: rgba(255, 255, 255, 0.75);
+      border: 3px solid hsla(0, 100%, 100%, 1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    #loading {
+      
+    }
+    .progress-bar-outer {
+      border: 1px solid currentColor;
+      height: 10px;
+      width: 200px;
+      max-width: 200px;
+    }
+    .progress-bar-inner {
+      height: 100%;
+      width: 0;
+      background-color: currentColor;
+    }
+    .loading-text, noscript {
+      font-weight: normal;
+      font-size: 36px;
+      margin: 0 0 16px;
+    }
+    .loading-image {
+      margin: 0 0 16px;
+    }
+    #error-message, #error-stack {
+      font-family: monospace;
+      max-width: 600px;
+      white-space: pre-wrap;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    #error-stack {
+      text-align: left;
+      max-height: 200px;
+      overflow: auto;
+    }
+    .control-button {
+      width: 2rem;
+      height: 2rem;
+      padding: 0.375rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: pointer;
+      border: 0;
+      border-radius: 4px;
+    }
+    .control-button:hover {
+      background: #00c3ff26;
+    }
+    .control-button.active {
+      background: #00c3ff59;
+    }
+    .fullscreen-button {
+      background: white !important;
+    }
+    .standalone-fullscreen-button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 0 0 0 4px;
+      padding: 4px;
+      cursor: pointer;
+    }
+    .sc-canvas {
+      cursor: auto;
+    }
+    .sc-monitor-root[data-opcode^="data_"] .sc-monitor-value-color {
+      background-color: #ff8c1a;
+    }
+    .sc-monitor-row-value-outer {
+      background-color: #fc662c;
+    }
+    .sc-monitor-row-value-editing .sc-monitor-row-value-outer {
+      background-color: #e25b27;
+    }
+    
+  </style>
+  <meta name="theme-color" content="#000000">
+  
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="launch" class="screen" hidden title="Click to start">
+    <div class="green-flag">
+      <svg viewBox="0 0 16.63 17.5" width="42" height="44">
+        <defs><style>.cls-1,.cls-2{fill:#007AF4;stroke:#003080;stroke-linecap:round;stroke-linejoin:round;}.cls-2{stroke-width:1.5px;}</style></defs>
+        <path class="cls-1" d="M.75,2A6.44,6.44,0,0,1,8.44,2h0a6.44,6.44,0,0,0,7.69,0V12.4a6.44,6.44,0,0,1-7.69,0h0a6.44,6.44,0,0,0-7.69,0"/>
+        <line class="cls-2" x1="0.75" y1="16.75" x2="0.75" y2="0.75"/>
+      </svg>
+    </div>
+  </div>
+
+  <div id="loading" class="screen">
+    <noscript>Enable JavaScript</noscript>
+    <h1 class="loading-text">loading the alens</h1>
+    
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="loading-inner"></div></div>
+  </div>
+
+  <div id="error" class="screen" hidden>
+    <h1>Error</h1>
+    <details>
+      <summary id="error-message"></summary>
+      <p id="error-stack"></p>
+    </details>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const appElement = document.getElementById('app');
+    const launchScreen = document.getElementById('launch');
+    const loadingScreen = document.getElementById('loading');
+    const loadingInner = document.getElementById('loading-inner');
+    const errorScreen = document.getElementById('error');
+    const errorScreenMessage = document.getElementById('error-message');
+    const errorScreenStack = document.getElementById('error-stack');
+
+    const handleError = (error) => {
+      console.error(error);
+      if (!errorScreen.hidden) return;
+      errorScreen.hidden = false;
+      errorScreenMessage.textContent = '' + error;
+      let debug = error && error.stack || 'no stack';
+      debug += '\nUser agent: ' + navigator.userAgent;
+      errorScreenStack.textContent = debug;
+    };
+    const setProgress = (progress) => {
+      if (loadingInner) loadingInner.style.width = progress * 100 + '%';
+    };
+    const interpolate = (a, b, t) => a + t * (b - a);
+
+    try {
+      setProgress(0.1);
+
+      const scaffolding = new Scaffolding.Scaffolding();
+      scaffolding.width = 360;
+      scaffolding.height = 640;
+      scaffolding.resizeMode = "preserve-ratio";
+      scaffolding.editableLists = false;
+      scaffolding.usePackagedRuntime = true;
+      scaffolding.setup();
+      scaffolding.appendTo(appElement);
+
+      const vm = scaffolding.vm;
+      window.scaffolding = scaffolding;
+      window.vm = scaffolding.vm;
+      window.Scratch = {
+        vm,
+        renderer: vm.renderer,
+        audioEngine: vm.runtime.audioEngine,
+        bitmapAdapter: vm.runtime.v2BitmapAdapter,
+        videoProvider: vm.runtime.ioDevices.video.provider
+      };
+
+      scaffolding.setUsername("player####".replace(/#/g, () => Math.floor(Math.random() * 10)));
+      scaffolding.setAccentColor("#00c3ff");
+
+      try {
+        scaffolding.addCloudProvider(new Scaffolding.Cloud.WebSocketProvider(["wss://clouddata.turbowarp.org","wss://clouddata.turbowarp.xyz"], "p4-@game-main.pmp"));
+      } catch (error) {
+        console.error(error);
+      }
+
+      vm.setTurboMode(false);
+      if (vm.setInterpolation) vm.setInterpolation(false);
+      if (vm.setFramerate) vm.setFramerate(60);
+      if (vm.renderer.setUseHighQualityRender) vm.renderer.setUseHighQualityRender(true);
+      if (vm.setRuntimeOptions) vm.setRuntimeOptions({
+        fencing: false,
+        miscLimits: false,
+        maxClones: 9999999999,
+        dangerousOptimizations: false
+      });
+      if (vm.setCompilerOptions) vm.setCompilerOptions({
+        enabled: true,
+        warpTimer: false
+      });
+      if (vm.renderer.setMaxTextureDimension) vm.renderer.setMaxTextureDimension(2048);
+
+      if (typeof ScaffoldingAddons !== 'undefined') {
+        ScaffoldingAddons.run(scaffolding, {"gamepad":false,"pointerlock":false,"specialCloudBehaviors":false,"unsafeCloudBehaviors":false,"pause":false});
+      }
+
+      scaffolding.setExtensionSecurityManager({
+        getSandboxMode: () => 'unsandboxed',
+        canLoadExtensionFromProject: () => true
+      });
+      for (const extension of ["data:application/javascript,%2F%2F%20Name%3A%20Object%0A%2F%2F%20ID%3A%20skyhigh173object%0A%2F%2F%20Description%3A%20Treat%20JSON%20strings%20as%20objects%2C%20to%20boost%20the%20performance.%0A%2F%2F%20By%3A%20Skyhigh173%0A%0A(function%20(Scratch)%20%7B%0A%20%20'use%20strict'%3B%0A%20%20%2F%2F%20!%20to%20editor%3A%0A%20%20%2F%2F%20!%20pay%20attention%20to%20comments%20which%20contains%20'!'%20at%20the%20beginning.%0A%20%20%2F%2F%20!%20they%20are%20important.%0A%0A%20%20%2F%2F%20!%20custom%20functions%0A%20%20window.Map._e%20%3D%20%7B%0A%20%20%20%20get%20empty()%20%7B%0A%20%20%20%20%20%20return%20new%20Map()%3B%0A%20%20%20%20%7D%2C%0A%0A%20%20%20%20%2F%2F%20reviver%20for%20JSON.parse%0A%20%20%20%20reviver(_%2C%20value)%20%7B%0A%20%20%20%20%20%20if%20(value%20instanceof%20Array%20%7C%7C%20value%20instanceof%20Object)%20return%20new%20Map(Object.entries(value))%3B%0A%20%20%20%20%20%20return%20value%3B%0A%20%20%20%20%7D%2C%0A%0A%20%20%20%20%2F%2F%20replacer%20for%20JSON.stringify%0A%20%20%20%20replacer(_%2C%20value)%20%7B%0A%20%20%20%20%20%20if%20(value%20instanceof%20Map)%20return%20Object.fromEntries(value)%3B%0A%20%20%20%20%20%20return%20value%3B%0A%20%20%20%20%7D%2C%0A%0A%20%20%20%20%2F%2F%20!%20use%20when%20you%20need%20to%20modify%20contents%20of%20the%20map%0A%20%20%20%20deepCopy(value)%20%7B%0A%20%20%20%20%20%20if%20(value%20instanceof%20Map)%20return%20structuredClone(value)%3B%0A%20%20%20%20%20%20return%20Map._e.parse(value)%3B%0A%20%20%20%20%7D%2C%0A%0A%20%20%20%20%2F%2F%20!%20use%20when%20you%20only%20needs%20to%20read%20the%20contents%20of%20the%20map%0A%20%20%20%20shallowCopy(value)%20%7B%0A%20%20%20%20%20%20return%20Map._e.parse(value)%3B%0A%20%20%20%20%7D%2C%0A%0A%20%20%20%20%2F%2F%20(shallow)%20parse%20value%0A%20%20%20%20parse(value)%20%7B%0A%20%20%20%20%20%20if%20(value%20instanceof%20Map)%20return%20value%3B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20const%20result%20%3D%20JSON.parse(value%2C%20Map._e.reviver)%3B%0A%20%20%20%20%20%20%20%20if%20(result%20instanceof%20Map)%20return%20result%3B%20%2F%2F%20make%20sure%20they%20are%20not%20Numbers%0A%20%20%20%20%20%20%7D%20catch%20%7B%0A%20%20%20%20%20%20%20%20%2F%2F%20ignore%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20return%20Map._e.empty%3B%0A%20%20%20%20%7D%2C%0A%0A%20%20%20%20%2F%2F%20used%20in%20'set'%20related%20functions%0A%20%20%20%20fromMapOrString(value)%20%7B%0A%20%20%20%20%20%20if%20(value%20instanceof%20Map)%20return%20structuredClone(value)%3B%0A%20%20%20%20%20%20if%20(typeof%20value%20%3D%3D%3D%20'number')%20return%20value%3B%0A%20%20%20%20%20%20if%20(typeof%20value%20%3D%3D%3D%20'boolean')%20return%20value%3B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20%2F%2F%20!%20we%20can%20get%20strings%20representing%20unrelated%20types%20(i.e.%20number%20and%20boolean)%0A%20%20%20%20%20%20%20%20const%20parsed%20%3D%20JSON.parse(value)%3B%0A%20%20%20%20%20%20%20%20if%20(typeof%20parsed%20!%3D%3D%20'object')%20return%20parsed%3B%0A%20%20%20%20%20%20%20%20return%20new%20Map(Object.entries(parsed))%3B%0A%20%20%20%20%20%20%7D%20catch%20%7B%0A%20%20%20%20%20%20%20%20return%20value%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%2C%0A%0A%20%20%20%20%2F%2F%20Array%20to%20Map%0A%20%20%20%20fromArray(arr)%20%7B%0A%20%20%20%20%20%20return%20new%20Map(Object.entries(arr))%3B%0A%20%20%20%20%7D%2C%0A%0A%20%20%20%20%2F%2F%20to%20array%0A%20%20%20%20toArray(obj)%20%7B%0A%20%20%20%20%20%20return%20%5B...Map._e.shallowCopy(obj).values()%5D%3B%0A%20%20%20%20%7D%2C%0A%0A%20%20%20%20%2F%2F%20to%20indexed%20obj%0A%20%20%20%20toIndexed(obj)%20%7B%0A%20%20%20%20%20%20return%20Map._e.fromArray(Map._e.toArray(obj))%3B%0A%20%20%20%20%7D%2C%0A%0A%20%20%20%20%2F%2F%20do%20things%20as%20Array%0A%20%20%20%20asArray(obj%2C%20func%2C%20inplaceReturn%20%3D%20false)%20%7B%0A%20%20%20%20%20%20let%20tmp%20%3D%20%5B...Map._e.deepCopy(obj).values()%5D%3B%0A%20%20%20%20%20%20const%20res%20%3D%20func(tmp)%3B%0A%20%20%20%20%20%20if%20(inplaceReturn)%20tmp%20%3D%20res%3B%0A%20%20%20%20%20%20return%20Map._e.fromArray(tmp)%3B%0A%20%20%20%20%7D%0A%20%20%7D%3B%0A%0A%20%20window.Map.prototype.toString%20%3D%20function()%20%7B%20return%20JSON.stringify(Object.fromEntries(this)%2C%20Map._e.replacer)%3B%20%7D%3B%0A%0A%0A%20%20const%20exampleJSON%20%3D%20%7B%0A%20%20%20%20empty%3A%20'%7B%7D'%2C%0A%20%20%20%20keyValue%3A%20'%7B%22key%22%3A%22value%22%7D'%2C%0A%20%20%20%20keyValue2%3A%20'%7B%22key2%22%3A%22value2%22%7D'%2C%0A%20%20%20%20double%3A%20'%7B%22apple%22%3A%22banana%22%2C%22one%22%3A%22two%22%7D'%2C%0A%20%20%20%20array%3A%20'%7B%220%22%3A%22a%22%2C%221%22%3A%22b%22%2C%222%22%3A%22c%22%7D'%0A%20%20%7D%3B%0A%0A%20%20const%20label%20%3D%20(text)%20%3D%3E%20(%7B%0A%20%20%20%20blockType%3A%20'label'%2C%0A%20%20%20%20text%3A%20text%0A%20%20%7D)%3B%0A%0A%20%20class%20ObjectExtension%20%7B%0A%20%20%20%20getInfo()%20%7B%0A%20%20%20%20%20%20return%20%7B%0A%20%20%20%20%20%20%20%20id%3A%20'skyhigh173object'%2C%0A%20%20%20%20%20%20%20%20name%3A%20'Object'%2C%0A%20%20%20%20%20%20%20%20color1%3A%20'%239999FF'%2C%0A%20%20%20%20%20%20%20%20blocks%3A%20%5B%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'newObject'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'new%20Object'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20disableMonitor%3A%20true%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'toJSON'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'%5Bobj%5D%20to%20JSON'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'toMap'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'%5Bobj%5D%20to%20Object'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'keyval'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'%7B%5Bkey%5D%3A%20%5Bval%5D%7D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20key%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'key'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20val%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'value'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'set'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'%5Bobj%5D%20set%20%5Bkey%5D%20to%20value%20%5Bvalue%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.empty%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20key%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'key'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'value'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'get'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'%5Bobj%5D%20get%20%5Bkey%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20key%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'key'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'delete'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'%5Bobj%5D%20delete%20%5Bkey%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20key%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'key'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'has'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.BOOLEAN%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'%5Bobj%5D%20has%20%5Bkey%5D%3F'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20key%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'key'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'length'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'size%20of%20%5Bobj%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.empty%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'merge'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'merge%20%5Bobj1%5D%20with%20%5Bobj2%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj1%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj2%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue2%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'indexOf'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'index%20of%20key%20%5Bkey%5D%20in%20%5Bobj%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20key%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'one'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.double%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'getWhole'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'get%20whole%20from%20key%20%5Bkey%5D%20in%20%5Bobj%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20key%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'one'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.double%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'keys'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'keys%20of%20%5Bobj%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'values'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'values%20of%20%5Bobj%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'entries'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'entries%20of%20%5Bobj%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'isObject'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.BOOLEAN%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'is%20%5Bobj%5D%20object%3F'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'%20'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20label('Indexed%20Object')%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'toIndexed'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'%5Bobj%5D%20to%20indexed%20object'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.keyValue%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'toArray'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'%5Bobj%5D%20to%20Array'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.array%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'item'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'item%20%5Bidx%5D%20of%20%5Bobj%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20idx%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20-1%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.array%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'push'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'push%20value%20%5Bvalue%5D%20to%20%5Bobj%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'd'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.array%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'slice'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'slice%20%5Bobj%5D%20with%20%5Ba%5D%20%5Bb%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20a%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%201%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20b%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%202%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.array%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'splice1'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'splice%20%5Bobj%5D%20with%20%5Ba%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20a%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%201%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.array%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'splice2'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'splice%20%5Bobj%5D%20with%20%5Ba%5D%20%5Bb%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20a%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%201%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20b%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%200%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.array%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'splice3'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'splice%20%5Bobj%5D%20with%20%5Ba%5D%20%5Bb%5D%20%5Bi%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20a%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%201%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20b%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%200%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20i%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'z'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.array%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'listAsObject'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'list%20%5Blist%5D%20as%20object'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20list%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'list'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'setListAsObject'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.COMMAND%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'set%20list%20%5Blist%5D%20to%20object%20%5Bobj%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20list%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'list'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20obj%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20exemptFromNormalization%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20exampleJSON.array%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%5D%2C%0A%20%20%20%20%20%20%20%20menus%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20list%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20acceptReporters%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20items%3A%20'getLists'%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20getLists%20()%20%7B%0A%20%20%20%20%20%20const%20globalLists%20%3D%20Object.values(Scratch.vm.runtime.getTargetForStage().variables).filter(x%20%3D%3E%20x.type%20%3D%3D%20'list')%3B%0A%20%20%20%20%20%20const%20localLists%20%3D%20Object.values(Scratch.vm.editingTarget.variables).filter(x%20%3D%3E%20x.type%20%3D%3D%20'list')%3B%0A%20%20%20%20%20%20const%20uniqueLists%20%3D%20%5B...new%20Set(%5B...globalLists%2C%20...localLists%5D)%5D%3B%0A%20%20%20%20%20%20if%20(uniqueLists.length%20%3D%3D%3D%200)%20%7B%0A%20%20%20%20%20%20%20%20return%20%5B%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'select%20a%20list'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'select%20a%20list'%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%5D%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20return%20uniqueLists.map(i%20%3D%3E%20(%7B%0A%20%20%20%20%20%20%20%20text%3A%20i.name%2C%0A%20%20%20%20%20%20%20%20value%3A%20i.id%0A%20%20%20%20%20%20%7D))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20getScratchLists(util)%20%7B%0A%20%20%20%20%20%20const%20globalLists%20%3D%20Object.values(Scratch.vm.runtime.getTargetForStage().variables).filter(x%20%3D%3E%20x.type%20%3D%3D%20'list')%3B%0A%20%20%20%20%20%20const%20localLists%20%3D%20Object.values(util.target.variables).filter(x%20%3D%3E%20x.type%20%3D%3D%20'list')%3B%0A%20%20%20%20%20%20const%20uniqueLists%20%3D%20%5B...new%20Set(%5B...globalLists%2C%20...localLists%5D)%5D%3B%0A%20%20%20%20%20%20return%20uniqueLists.map(i%20%3D%3E%20(%7B%0A%20%20%20%20%20%20%20%20text%3A%20i.name%2C%0A%20%20%20%20%20%20%20%20value%3A%20i.id%0A%20%20%20%20%20%20%7D))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20%2F%2F%20from%20json%20extension%0A%20%20%20%20listAsObject(%7B%20list%20%7D%2C%20util)%20%7B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20let%20listVariable%20%3D%20util.target.lookupVariableById(list)%3B%0A%20%20%20%20%20%20%20%20if%20(listVariable%20%3D%3D%20undefined)%20%7B%0A%20%20%20%20%20%20%20%20%20%20listVariable%20%3D%20this.getListsID(util).find(x%20%3D%3E%20x.text%20%3D%3D%3D%20list).value%3B%0A%20%20%20%20%20%20%20%20%20%20listVariable%20%3D%20util.target.lookupVariableById(listVariable)%3B%0A%20%20%20%20%20%20%20%20%7D%0A%0A%20%20%20%20%20%20%20%20if%20(listVariable%20%26%26%20listVariable.type%20%3D%3D%3D%20'list')%20%7B%0A%20%20%20%20%20%20%20%20%20%20return%20Map._e.fromArray(listVariable.value)%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%20catch%20(e)%20%7B%0A%20%20%20%20%20%20%20%20%2F%2F%20ignore%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20return%20''%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20setListAsObject(%7B%20list%2C%20obj%20%7D%2C%20util)%20%7B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20let%20listVariable%20%3D%20util.target.lookupVariableById(list)%3B%0A%0A%20%20%20%20%20%20%20%20if%20(listVariable%20%3D%3D%20undefined)%20%7B%0A%20%20%20%20%20%20%20%20%20%20listVariable%20%3D%20this.getListsID(util).find(x%20%3D%3E%20x.text%20%3D%3D%3D%20list).value%3B%0A%20%20%20%20%20%20%20%20%20%20listVariable%20%3D%20util.target.lookupVariableById(listVariable)%3B%0A%20%20%20%20%20%20%20%20%7D%0A%0A%20%20%20%20%20%20%20%20if%20(listVariable%20%26%26%20listVariable.type%20%3D%3D%3D%20'list')%20%7B%0A%20%20%20%20%20%20%20%20%20%20listVariable.value%20%3D%20this._toArray(Map._e.deepCopy(obj))%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%20catch%20(e)%20%7B%0A%20%20%20%20%20%20%20%20%2F%2F%20ignore%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%0A%20%20%20%20newObject()%20%7B%0A%20%20%20%20%20%20return%20Map._e.empty%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20toJSON(args)%20%7B%0A%20%20%20%20%20%20return%20Map._e.shallowCopy(args.obj).toString()%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20toMap(args)%20%7B%0A%20%20%20%20%20%20return%20Map._e.shallowCopy(args.obj)%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20keyval(args)%20%7B%0A%20%20%20%20%20%20return%20new%20Map().set(Scratch.Cast.toString(args.key)%2C%20Map._e.fromMapOrString(args.val))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20_toArray(obj)%20%7B%0A%20%20%20%20%20%20return%20Array.from(obj.values())%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20toArray(args)%20%7B%0A%20%20%20%20%20%20return%20JSON.stringify(this._toArray(Map._e.shallowCopy(args.obj)))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20set(args)%20%7B%0A%20%20%20%20%20%20const%20value%20%3D%20Map._e.fromMapOrString(args.value)%3B%0A%20%20%20%20%20%20return%20Map._e.deepCopy(args.obj).set(Scratch.Cast.toString(args.key)%2C%20value)%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20get(args)%20%7B%0A%20%20%20%20%20%20return%20Map._e.shallowCopy(args.obj).get(Scratch.Cast.toString(args.key))%20%3F%3F%20''%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20delete(args)%20%7B%0A%20%20%20%20%20%20let%20obj%20%3D%20Map._e.deepCopy(args.obj)%3B%0A%20%20%20%20%20%20obj.delete(Scratch.Cast.toString(args.key))%3B%0A%20%20%20%20%20%20return%20obj%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20length(args)%20%7B%0A%20%20%20%20%20%20return%20Map._e.shallowCopy(args.obj).size%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20has(args)%20%7B%0A%20%20%20%20%20%20return%20Map._e.shallowCopy(args.obj).has(args.key)%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20merge(args)%20%7B%0A%20%20%20%20%20%20return%20new%20Map(%5B...Map._e.shallowCopy(args.obj1)%2C%20...Map._e.shallowCopy(args.obj2)%5D)%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20isObject(args)%20%7B%0A%20%20%20%20%20%20return%20args.obj%20instanceof%20Map%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20keys(args)%20%7B%0A%20%20%20%20%20%20return%20Map._e.fromArray(%5B...Map._e.shallowCopy(args.obj).keys()%5D)%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20values(args)%20%7B%0A%20%20%20%20%20%20return%20%20Map._e.fromArray(%5B...Map._e.shallowCopy(args.obj).values()%5D)%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20entries(args)%20%7B%0A%20%20%20%20%20%20const%20obj%20%3D%20Map._e.shallowCopy(args.obj)%3B%0A%20%20%20%20%20%20%2F%2F%20convert%20entries%20to%20map%0A%20%20%20%20%20%20return%20Map._e.fromArray(Array.from(obj.entries()).map(x%20%3D%3E%20Map._e.fromArray(x)))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20indexOf(args)%20%7B%0A%20%20%20%20%20%20return%20%5B...Map._e.shallowCopy(args.obj).keys()%5D.indexOf(Scratch.Cast.toString(args.key))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20getWhole(args)%20%7B%0A%20%20%20%20%20%20const%20key%20%3D%20Scratch.Cast.toString(args.key)%3B%0A%20%20%20%20%20%20const%20obj%20%3D%20Map._e.shallowCopy(args.obj)%3B%0A%20%20%20%20%20%20if%20(!obj.has(key))%20return%20Map._e.empty%3B%0A%20%20%20%20%20%20return%20new%20Map(%5B%5Bkey%2C%20obj.get(key)%5D%5D)%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20toIndexed(args)%20%7B%0A%20%20%20%20%20%20return%20Map._e.toIndexed(args.obj)%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20push(args)%20%7B%0A%20%20%20%20%20%20const%20value%20%3D%20Map._e.fromMapOrString(args.value)%3B%0A%20%20%20%20%20%20return%20Map._e.asArray(args.obj%2C%20x%20%3D%3E%20x.push(value))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20slice(args)%20%7B%0A%20%20%20%20%20%20const%20obj%20%3D%20Map._e.deepCopy(args.obj)%3B%0A%20%20%20%20%20%20return%20new%20Map(%5B...obj.entries()%5D.slice(args.a%2C%20args.b))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20splice1(args)%20%7B%0A%20%20%20%20%20%20return%20Map._e.asArray(args.obj%2C%20x%20%3D%3E%20x.splice(args.a))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20splice2(args)%20%7B%0A%20%20%20%20%20%20return%20Map._e.asArray(args.obj%2C%20x%20%3D%3E%20x.splice(args.a%2C%20args.b))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20splice3(args)%20%7B%0A%20%20%20%20%20%20const%20value%20%3D%20Map._e.fromMapOrString(args.i)%3B%0A%20%20%20%20%20%20return%20Map._e.asArray(args.obj%2C%20x%20%3D%3E%20x.splice(args.a%2C%20args.b%2C%20value))%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20item(args)%20%7B%0A%20%20%20%20%20%20return%20Map._e.toArray(args.obj).at(args.idx)%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%0A%20%20Scratch.extensions.register(new%20ObjectExtension())%3B%0A%7D)(Scratch)%3B%0A"]) {
+        vm.extensionManager.loadExtensionURL(extension);
+      }
+
+      vm.runtime.isProjectPermissionManagerDisabled = true;
+      vm.runtime.extensionRuntimeOptions.javascriptUnsandboxed = true;
+
+    } catch (e) {
+      handleError(e);
+    }
+  </script>
+  
+  
+    <script>
+      const getProjectData = (function() {
+        const storage = scaffolding.storage;
+        storage.onprogress = (total, loaded) => {
+          setProgress(interpolate(0.2, 0.98, loaded / total));
+        };
+        
+        storage.addWebStore(
+          [
+            storage.AssetType.ImageVector,
+            storage.AssetType.ImageBitmap,
+            storage.AssetType.Sound,
+            storage.AssetType.Font
+          ].filter(i => i),
+          (asset) => new URL('./assets/' + asset.assetId + '.' + asset.dataFormat, location).href
+        );
+        return () => new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = () => {
+          resolve(xhr.response);
+        };
+        xhr.onerror = () => {
+          if (location.protocol === 'file:') {
+            reject(new Error('Zip environment must be used from a website, not from a file URL.'));
+          } else {
+            reject(new Error('Request to load project data failed.'));
+          }
+        };
+        xhr.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setProgress(interpolate(0.1, 0.2, e.loaded / e.total));
+          }
+        };
+        xhr.responseType = 'arraybuffer';
+        xhr.open('GET', "./assets/project.json");
+        xhr.send();
+      });
+      })();
+    </script>
+  <script>
+    const run = async () => {
+      const projectData = await getProjectData();
+      await scaffolding.loadProject(projectData);
+      setProgress(1);
+      loadingScreen.hidden = true;
+      if (true) {
+        scaffolding.start();
+      } else {
+        launchScreen.hidden = false;
+        launchScreen.addEventListener('click', () => {
+          launchScreen.hidden = true;
+          scaffolding.start();
+        });
+        launchScreen.focus();
+      }
+    };
+    run().catch(handleError);
+  </script>
+</body>
+</html>
