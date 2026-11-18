@@ -1,0 +1,79 @@
+{
+  "framerate": 0,
+  "highQualityPen": true,
+  "maxClones": 9999999999,
+  "fencing": false,
+  "miscLimits": false,
+  "autoplay": true,
+  "loadingScreen": {
+    "progressBar": true,
+    "text": "",
+    "imageMode": "normal",
+    "image": null
+  },
+  "penguinmod": {
+    "permissionManager": {
+      "unsandboxedJavascript": true,
+      "enabled": false
+    }
+  },
+  "target": "zip",
+  "turbo": false,
+  "interpolation": false,
+  "dangerousOptimizations": false,
+  "stageWidth": 480,
+  "stageHeight": 855,
+  "resizeMode": "preserve-ratio",
+  "username": "player####",
+  "closeWhenStopped": false,
+  "projectId": "rocks.theshovel.alien",
+  "custom": {
+    "css": "",
+    "js": ""
+  },
+  "appearance": {
+    "background": "#000000",
+    "foreground": "#ffffff",
+    "accent": "#00c3ff"
+  },
+  "controls": {
+    "greenFlag": { "enabled": false },
+    "stopAll": { "enabled": false },
+    "fullscreen": { "enabled": false },
+    "pause": { "enabled": false }
+  },
+  "monitors": {
+    "editableLists": false,
+    "variableColor": "#ff8c1a",
+    "listColor": "#fc662c"
+  },
+  "compiler": {
+    "enabled": true,
+    "warpTimer": false
+  },
+  "packagedRuntime": true,
+  "app": {
+    "icon": null,
+    "packageName": "rocks.theshovel.alien",
+    "windowTitle": "Alien",
+    "windowMode": "window",
+    "version": "1.0.0"
+  },
+  "chunks": {
+    "gamepad": false,
+    "pointerlock": false
+  },
+  "cloudVariables": {
+    "mode": "ws",
+    "cloudHost": "wss://clouddata.turbowarp.org",
+    "custom": {},
+    "specialCloudBehaviors": false,
+    "unsafeCloudBehaviors": false
+  },
+  "cursor": {
+    "type": "auto",
+    "custom": null,
+    "center": { "x": 0, "y": 0 }
+  },
+  "extensions": []
+}

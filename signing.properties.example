@@ -1,0 +1,12 @@
+# Copy to signing.properties and fill in. signing.properties and the keystore
+# are both gitignored: never commit them.
+#
+# Create the keystore once (from the AndroidStudio directory):
+#   keytool -genkeypair -v -keystore key.jks -alias gamekey \
+#       -keyalg RSA -keysize 2048 -validity 10000
+#
+# storeFile is resolved relative to AndroidStudio/.
+storeFile=key.jks
+storePassword=change-me
+keyAlias=gamekey
+keyPassword=change-me

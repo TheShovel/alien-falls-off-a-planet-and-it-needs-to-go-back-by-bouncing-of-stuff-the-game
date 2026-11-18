@@ -1,0 +1,29 @@
+*.iml
+.gradle/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+
+# Local Android toolchain (downloaded JDK, SDK path)
+.tools/
+AndroidStudio/local.properties
+
+# Gradle build output
+AndroidStudio/.gradle/
+AndroidStudio/build/
+AndroidStudio/app/build/
+
+# Signing secrets
+signing.properties
+AndroidStudio/key.jks
+AndroidStudio/*.jks
+AndroidStudio/*.keystore
+
+# Generated game assets (produced by pack.sh)
+AndroidStudio/app/src/main/assets/*
+!AndroidStudio/app/src/main/assets/.gitkeep
+
+# Release artifacts
+dist/
